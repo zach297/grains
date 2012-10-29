@@ -8,13 +8,16 @@ import derelict.sdl2.sdl;
 
 enum grain_type : Uint8
 {
-    SAND  = 0
+    SAND = 0,
+    BLACK_POWDER,
+    COUNT,
 }
 
 enum grain_flag : Uint8
 {
     FREE  = 0,
-    ALIVE = 1
+    ALIVE = 1,
+    FIRE  = 2,
 }
 
 struct grain_t
@@ -23,6 +26,7 @@ struct grain_t
     grain_flag flags;
     float x, y;
     float vx, vy;
+    float status;
     float r, g, b;
 }
 
@@ -103,7 +107,7 @@ void grains_state_init(ref grains_state_t grain_state)
     grain_state.grains.length = 100_000;
     foreach (ref grain; grain_state.grains)
     {
-        grain.type = grain_type.SAND;
+        grain.type = cast(grain_type)dice(100, 1);
         grain.flags = grain_flag.ALIVE;
         grain.x = uniform(0.0f, 1.0f);
         grain.y = uniform(0.0f, 1.0f);
@@ -118,11 +122,19 @@ void grains_update(ref grains_state_t grain_state, double dt)
     foreach (ref grain; taskPool.parallel(grain_state.grains, 1000))
     //foreach (ref grain; grain_state.grains)
     {
-        grain.x += grain.vx * dt;
-        grain.y += grain.vy * dt;
-        grain.vx *= 0.99f;
-        grain.vy *= 0.99f;
-        //grain.vy += 0.98 * dt * uniform(0.0f, 1.0f);
+        if (grain.flags & grain_flag.ALIVE)
+        {
+            grain.x += grain.vx * dt;
+            grain.y += grain.vy * dt;
+            grain.vx *= 0.99f;
+            grain.vy *= 0.99f;
+            if (grain.flags & grain_flag.FIRE && grain.type == grain_type.BLACK_POWDER)
+            {
+                grain.flags = grain_flag.FREE;
+                grains_shockwave(grain_state, grain.x, grain.y, 0.005);
+            }
+            //grain.vy += 0.98 * dt * uniform(0.0f, 1.0f);
+        }
     }
 }
 
@@ -131,11 +143,18 @@ void grains_shockwave(ref grains_state_t grain_state, float x, float y, float en
     foreach (ref grain; taskPool.parallel(grain_state.grains, 1000))
     //foreach (ref grain; grain_state.grains)
     {
-        float dx = grain.x - x;
-        float dy = grain.y - y;
-        float d2 = dx * dx + dy * dy;
-        grain.vx += dx / d2 * energy;
-        grain.vy += dy / d2 * energy;
+        if (grain.flags & grain_flag.ALIVE)
+        {
+            float dx = grain.x - x;
+            float dy = grain.y - y;
+            float d2 = dx * dx + dy * dy;
+            grain.vx += dx / d2 * energy;
+            grain.vy += dy / d2 * energy;
+            if (d2 < 0.004)
+            {
+                grain.flags |= grain_flag.FIRE;
+            }
+        }
     }
 }
 
@@ -153,13 +172,15 @@ void grains_draw(ref app_t app, ref grains_state_t grain_state, SDL_Surface * su
     //foreach (grain; grain_state.grains)
     {
         int x, y;
-        app_world_to_screen(app, grain.x, grain.y, x, y);
-        if (x >= 0 && x < app.width && y >= 0 && y < app.height)
+        if (grain.flags & grain_flag.ALIVE)
         {
-
-            pixels[x * stride + y * pitch] = cast(ubyte)(255 * grain.b);
-            pixels[x * stride + y * pitch + 1] = cast(ubyte)(255 * grain.g);
-            pixels[x * stride + y * pitch + 2] = cast(ubyte)(255 * grain.r);
+            app_world_to_screen(app, grain.x, grain.y, x, y);
+            if (x >= 0 && x < app.width && y >= 0 && y < app.height)
+            {
+                pixels[x * stride + y * pitch]     = cast(ubyte)(255 * grain.b);
+                pixels[x * stride + y * pitch + 1] = cast(ubyte)(255 * grain.g);
+                pixels[x * stride + y * pitch + 2] = cast(ubyte)(255 * grain.r);
+            }
         }
     }
 
@@ -222,8 +243,8 @@ void main() {
     SDL_Init(SDL_INIT_VIDEO);
 
     app_t app;
-    app.width = 2560;
-    app.height = 1440;
+    app.width = 800;
+    app.height = 600;
     app.min_x = 0;
     app.min_y = 0;
     app.max_x = 1;
@@ -231,7 +252,7 @@ void main() {
     app.current_state = 0;
     grains_state_init(app.state_buffers[0]);
 
-    app.window = SDL_CreateWindow("Grains", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, app.width, app.height, SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN);
+    app.window = SDL_CreateWindow("Grains", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, app.width, app.height, SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
 
     grains_run(app);
 
