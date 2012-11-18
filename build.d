@@ -10,7 +10,7 @@ enum string[] LIBS = ["DerelictSDL2", "DerelictUtil"];
 version (DigitalMars)
 {
     enum string COMPILE_COMMAND = "dmd -c ";
-    enum string LINK_COMMAND = "dmd -L-ldlgit";
+    enum string LINK_COMMAND = "dmd -L-ldl";
 }
 
 version (GNU)

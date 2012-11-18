@@ -46,6 +46,10 @@ void app_run(ref app_t app)
                 {
                     running = false;
                 }
+                if (event.key.keysym.sym == SDLK_F1)
+                {
+                    SDL_SaveBMP(screen, "screen.bmp");
+                }
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 float x, y;
