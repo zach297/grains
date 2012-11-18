@@ -1,28 +1,35 @@
+PROJECT_NAME = grains
+COMPILE_COMMAND = dmd -c 
+LINK_COMMAND = dmd -L-ldl
+RM_COMMAND = rm
 COMPILE_OPTIONS = -g -gs
-OBJS = app.o devices.o grains.o util.o
-RED_COLOR=`echo -e '\e[0;31m'`
-END_COLOR=`echo -e '\e[0m'`
+OBJ_SUFFIX = .o
+LIB_SUFFIX = .a
+LIB_PREFIX = -L/usr/local/lib/lib
+EXE_SUFFIX = 
+OBJS = util$(OBJ_SUFFIX) app$(OBJ_SUFFIX) devices$(OBJ_SUFFIX) grains$(OBJ_SUFFIX)
 
 
-grains: $(OBJS)
-	@echo -e "\e[0;36m[Link]\e[0m"
-	@dmd -L/usr/local/lib/libDerelictSDL2.a -L/usr/local/lib/libDerelictUtil.a -L-ldl $(OBJS) -ofgrains
-
-app.o: app.d
-	@echo -e "\e[0;32m[app.d]\e[0m"
-	@dmd -c $(COMPILE_OPTIONS) app.d
-
-devices.o: devices.d
-	@echo -e "\e[0;32m[devices.d]\e[0m"
-	@dmd -c $(COMPILE_OPTIONS) devices.d
-
-grains.o: grains.d
-	@echo -e "\e[0;32m[grains.d]\e[0m"
-	@dmd -c $(COMPILE_OPTIONS) grains.d
-
-util.o: util.d
-	@echo -e "\e[0;32m[util.d]\e[0m"
-	@dmd -c $(COMPILE_OPTIONS) util.d
+$(PROJECT_NAME): $(OBJS)
+	@echo -e "\e[1;36m[Link]\e[0m"
+	@$(LINK_COMMAND) $(LIB_PREFIX)DerelictSDL2$(LIB_SUFFIX) $(LIB_PREFIX)DerelictUtil$(LIB_SUFFIX) $(OBJS) -of$(PROJECT_NAME)$(EXE_SUFFIX)
 
 clean:
-	rm $(OBJS)
+	$(RM_COMMAND) $(OBJS) $(PROJECT_NAME)$(EXE_SUFFIX)
+
+util$(OBJ_SUFFIX): util.d
+	@echo -e "\e[1;32m[util.d]\e[0m"
+	@$(COMPILE_COMMAND) $(COMPILE_OPTIONS) util.d
+
+app$(OBJ_SUFFIX): app.d
+	@echo -e "\e[1;32m[app.d]\e[0m"
+	@$(COMPILE_COMMAND) $(COMPILE_OPTIONS) app.d
+
+devices$(OBJ_SUFFIX): devices.d
+	@echo -e "\e[1;32m[devices.d]\e[0m"
+	@$(COMPILE_COMMAND) $(COMPILE_OPTIONS) devices.d
+
+grains$(OBJ_SUFFIX): grains.d
+	@echo -e "\e[1;32m[grains.d]\e[0m"
+	@$(COMPILE_COMMAND) $(COMPILE_OPTIONS) grains.d
+

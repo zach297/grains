@@ -1,8 +1,5 @@
 module grains;
 
-//pragma(lib, "DerelictUtil.lib");
-//pragma(lib, "DerelictSDL2.lib");
-
 import std.c.stdlib;
 import std.stdio;
 import std.math;
@@ -56,6 +53,19 @@ public:
         app = &a;
     }
 
+    grain_t * find_first_free()
+    {
+        foreach (grain_index; iota(0, count))
+        {
+            grain_t * grain = cast(grain_t *)(grains + grain_index * stride);
+            if (grain.flags == grain_flag.FREE)
+            {
+                return grain;
+            }
+        }
+        return null;
+    }
+
     void self_update(double dt)
     {
         foreach (grain_index; parallel(iota(0, count)))
@@ -69,7 +79,7 @@ public:
                 grain.vy *= 0.99f;
                 if (grain.vx * grain.vx + grain.vy * grain.vy < 0.0001)
                 {
-                    grain.flags |= grain_flag.SLEEPING;   
+                    grain.flags |= grain_flag.SLEEPING;
                 }
                 if (grain.x < app.min_x || grain.x > app.max_x)
                 {
@@ -89,6 +99,7 @@ public:
     {
 
     }
+
 }
 
 struct sand_grain_t
@@ -116,7 +127,7 @@ class sand_grains_state_t : grains_state_t
             hsv_to_rgb(grain.x, 0.8f, 0.8f, grain.r, grain.g, grain.b);
         }
     }
-    
+
     ~this()
     {
         free(grains);
