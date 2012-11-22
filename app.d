@@ -63,6 +63,7 @@ void app_run(ref app_t app)
 
         ulong updateStart = SDL_GetPerformanceCounter();
         grains_update(app, 0.001);
+        devices_update(app, 0.001);
         ulong updateEnd = SDL_GetPerformanceCounter();
         //writeln("Update: ", updateEnd - updateStart);
 

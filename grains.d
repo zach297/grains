@@ -29,6 +29,7 @@ enum grain_flag : Uint8
 mixin template grain_mixin()
 {
     grain_flag flags;
+    float prev_x, prev_y;
     float x, y;
     float vx, vy;
     float r, g, b;
@@ -73,24 +74,13 @@ public:
             grain_t * grain = cast(grain_t *)(grains + grain_index * stride);
             if ((grain.flags & grain_flag.SLEEPING) == 0)
             {
+                grain.prev_x = grain.x;
+                grain.prev_y = grain.y;
                 grain.x += grain.vx * dt;
                 grain.y += grain.vy * dt;
                 grain.vx *= 0.99f;
                 grain.vy *= 0.99f;
-                if (grain.vx * grain.vx + grain.vy * grain.vy < 0.0001)
-                {
-                    grain.flags |= grain_flag.SLEEPING;
-                }
-                if (grain.x < app.min_x || grain.x > app.max_x)
-                {
-                    grain.vx = -grain.vx;
-                }
-                if (grain.y < app.min_y || grain.y > app.max_y)
-                {
-                    grain.vy = -grain.vy;
-                }
-                grain.x = clamp(grain.x, app.min_x, app.max_x);
-                grain.y = clamp(grain.y, app.min_y, app.max_y);
+                grain.vy -= -0.1f;
             }
         }
     }
@@ -119,7 +109,7 @@ class sand_grains_state_t : grains_state_t
         foreach (grain_index; 0..count)
         {
             grain_t * grain = cast(grain_t *)(grains + grain_index * stride);
-            grain.flags = cast(grain_flag)(grain_flag.ALIVE | grain_flag.SLEEPING);
+            grain.flags = grain_flag.FREE;
             grain.x = uniform(0.0f, 1.0f);
             grain.y = uniform(0.0f, 1.0f);
             grain.vx = 0;
@@ -153,7 +143,7 @@ class black_powder_grains_state_t : grains_state_t
         foreach (grain_index; 0..count)
         {
             black_powder_grain_t * grain = cast(black_powder_grain_t *)(grains + grain_index * stride);
-            grain.flags = cast(grain_flag)(grain_flag.ALIVE | grain_flag.SLEEPING);
+            grain.flags = grain_flag.FREE;
             grain.x = uniform(0.0f, 1.0f);
             grain.y = uniform(0.0f, 1.0f);
             grain.vx = 0;
@@ -162,7 +152,6 @@ class black_powder_grains_state_t : grains_state_t
             grain.r = 0.0;
             grain.g = 1.0;
             grain.b = 0.0;
-            //hsv_to_rgb(grain.x, 1.0f, 1.0f, grain.r, grain.g, grain.b);
         }
     }
 
@@ -205,7 +194,7 @@ class black_powder_grains_state_t : grains_state_t
 void grains_state_init(ref app_t app)
 {
     app.grains_states = new grains_state_t[grain_type.COUNT];
-    app.grains_states[grain_type.SAND] = new sand_grains_state_t(app, 100_000);
+    app.grains_states[grain_type.SAND] = new sand_grains_state_t(app, 10_000);
     app.grains_states[grain_type.BLACK_POWDER] = new black_powder_grains_state_t(app, 1000);
 }
 

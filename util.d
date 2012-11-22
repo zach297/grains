@@ -1,4 +1,44 @@
+import std.algorithm;
 import std.math;
+import std.traits;
+import std.stdio;
+
+T linear_interp(T,E)(T from, T to, E amount)
+{
+    static if (isArray!(T))
+    {
+        T diff = to;
+        diff[] -= from[];
+        diff[] *= amount;
+        diff[] += from[];
+        return diff;
+    }
+    else
+    {
+        return (to - from) * amount + from;
+    }
+}
+
+T linear_interp(T,E,D)(T from, T to, E amount, D total)
+{
+    static if (isArray!(T))
+    {
+        T diff = to;
+        diff[] -= from[];
+        diff[] *= amount / total;
+        diff[] += from[];
+        return diff;
+    }
+    else
+    {
+        return (to - from) * (amount / total) + from;
+    }
+}
+
+void normalize(T)(T[] v)
+{
+    v[] /= sqrt(reduce!("a + b * b")(cast(T)0, v));
+}
 
 T clamp(T)(T x, T min, T max)
 {
